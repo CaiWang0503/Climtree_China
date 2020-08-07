@@ -1,0 +1,817 @@
+---
+title: "Climtree analysis code"
+author: "Cai Wang and Douglas Yu"
+date: "2019.08.28"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup packages}
+#if not special command, the library can install by function install.library.
+library(here)
+library(tidyverse)
+library(vegan)
+library(beanplot)
+library(car)
+library(iNEXT)
+library(iNextPD)
+library(ade4)
+library(boral)
+library(mvabund)
+library(RColorBrewer)
+library(betapart)
+library(ape)
+library(SpeciesMix)
+library(beepr)
+library(corrplot)
+library(forcats)
+library(stringr)
+library(UpSetR)
+library(pheatmap)
+library(metacoder)
+library(metap)
+library(simba)
+library(zetadiv)
+sessionInfo()
+```
+
+we used the taxonomic assignment (RDP classifier) results to built a taxon distribution of all OTUs, those OTUs were filtered by lulu
+```{r load and format data}
+here::here()
+gfgMB <- read_csv(file.path("..", "Data", "CTotutable6211_lulu_RDP_with_env1908.csv"))
+#str(gfgMB)
+gfgMB <- tbl_df(gfgMB)
+#habitat
+habitat <- gfgMB %>% dplyr::select(sample_name:Gov_Type)
+habitat <- habitat %>% dplyr::filter(!is.na(Gov_Type)) # remove taxonomy rows
+#community
+community <- gfgMB %>% dplyr::select(starts_with("OTU"))
+community_t <- data.frame(t(community))
+community_t <- rownames_to_column(community_t)
+colnames(community_t) <- c("otu", gfgMB$sample_name) # add column names
+communityAll_t <- community_t %>% dplyr::filter(phylum=="Arthropoda") %>% dplyr:: select(-c(root:species_prob))
+communityAll <- t(communityAll_t)
+colnames(communityAll) <- communityAll[1,];communityAll <- communityAll[-1,] # make a vector of the first row, which has the otu names
+communityAll <- data.frame(communityAll)
+communityAll <- sapply(communityAll, function(x) as.numeric(as.character(x))) 
+communityAll <- data.frame(communityAll)
+rownames(communityAll) <- habitat$sample_name
+
+sort(colSums(communityAll))
+habitat$rowsums <- rowSums(communityAll)
+habitat$sprichness <- specnumber(communityAll, MARGIN = 1) 
+habitatN <- habitat
+rowSums(communityAll)
+rm(gfgMB,community_t,communityAll_t,community)
+#summary of reads
+s.reads<-sort(apply(communityAll,1,sum))
+sd(s.reads);mean(s.reads)
+#17396.33;36903.33
+o.reads<-sort(apply(communityAll,2,sum))
+sd(o.reads); mean(o.reads)
+#2930.399;1258.068
+communityB <- communityAll; communityB[communityB>1] <- 1 #make presence/absence dataset
+communityB <- communityAll
+communityB[communityB>1] <- 1 
+hist(habitatN$infestation_rate)
+communityB.low<- communityB %>% dplyr::filter(habitatN$infestation_rate < 0.25)
+communityB.high<- communityB %>% dplyr::filter(habitatN$infestation_rate >= 0.25)
+
+```
+
+#1.Alpha Diversity
+```{r iNEXT}
+#t-test for observed species richness by Type
+Low_obs <- rowSums(communityB.low)
+High_obs <- rowSums(communityB.high)
+t.test(Low_obs, High_obs) #p-value = 0.7659 
+#make community abun data
+cname <- c("high-infestation","low-infestation")
+comm4inext_abun <- matrix(c(colSums(communityB.low), colSums(communityB.high)), ncol = 2)
+colnames(comm4inext_abun) <- cname
+# http://chao.stat.nthu.edu.tw/wordpress/wp-content/uploads/software/iNEXT_UserGuide.pdf
+comm4inext <- rbind(c(nrow(communityB.low), nrow(communityB.high)), comm4inext_abun)
+comm4inext
+confnum=0.95 # set confidence here
+outcomm0 <- iNEXT(comm4inext, q=0, conf=confnum, datatype="incidence_freq")
+# Hill numbers (q):  0 = sp richness, 1 = Shannon, 2 = inverse Simpson
+outcomm0$DataInfo
+outI <- iNEXT(comm4inext, q=c(0,1,2), conf=confnum, datatype="incidence_freq")
+# Sample‐size‐based R/E curves, separating by "order"
+par(mfrow=c(1,1))
+col=c("#00bfc4","#F8766D")
+p1<-ggiNEXT(outI, type=1, facet.var="order",color.var ="none")+theme(plot.title = element_text(hjust = 0.5))+theme_bw()+scale_fill_manual(values=col)+scale_colour_manual(values=col)+theme(legend.position="none")
+
+par(mfrow=c(1,1))
+col=c("#F8766D","#00bfc4")
+ggiNEXT(outI, type=1, facet.var="order",color.var ="none")+theme(plot.title = element_text(hjust = 0.5))+theme_bw()+scale_fill_manual(values=col)+scale_colour_manual(values=col)
+#iNextPD
+commPD <- communityB
+#remove 2 OTUs with very long branches
+commPD$OTU170 <- NULL
+commPD$OTU280 <- NULL
+
+Low <- commPD %>% dplyr::filter(habitatN$infestation_rate < 0.25)
+High <- commPD %>% dplyr::filter(habitatN$infestation_rate >= 0.25)
+comm4inextPD <- matrix(c(colSums(High), colSums(Low)),ncol = 2)
+colnames(comm4inextPD) <- cname
+colnameHigh <- colnames(High)
+rownames(comm4inextPD) <- colnameHigh
+
+MLtree.tre <- read.table("../Data/RAxML_bestTree_ct878_20190905")
+ML.tre <- ade4::newick2phylog(MLtree.tre$V1)
+ML.lab <- rownames(comm4inextPD)
+
+Low.habitat <- habitatN %>% dplyr::filter(habitatN$infestation_rate < 0.25)
+High.habitat <- habitatN %>% dplyr::filter(habitatN$infestation_rate >= 0.25)
+rownames(Low) <- Low.habitat$sample_name
+rownames(High) <- High.habitat$sample_name
+commB <- list(High = t(High), intact = t(Low))
+#cname <- c("high-infestation","low-infestation")
+out <- iNextPD(commB, ML.lab, ML.tre, q=c(0, 1, 2), datatype="incidence_raw", endpoint = 30, se = TRUE)
+# Sample‐size‐based R/E curves, separating by "order"
+#col=c("#00bfc4","#F8766D","#C77CFF")
+p2<-ggiNEXT(out, type=1, facet.var="order")+theme_bw()+scale_fill_manual(values=col)+scale_colour_manual(values=col)+theme(legend.position="none")
+#library(ggpubr)
+ggpubr::ggarrange(p1,p2,ncol=2,nrow=1,labels=c("A","B"))
+#p2
+# display black‐white theme
+#table.phylog(comm4inextPD, ML.tre, csize=2, f.phylog=0.7)
+
+```
+
+```{r UpSetR}
+# In our case, Rows are OTUs, Columns are forest types ("Low" and "High"). So this is pretty easy to make. 0/1 dataset
+comm4inext_abun <- as.data.frame(comm4inext_abun) # comm4inext_abun from iNEXT
+comm4inext_abun[comm4inext_abun>1] <- 1
+abun<-data.frame(colSums(comm4inext_abun))
+upset(comm4inext_abun, sets = c("intact","pest-disturbed"),group.by = "sets", nintersects = NA)
+```
+## pheatmap before removing singletons
+
+```{r pheatmap}
+#set group
+habitatNphm<-habitatN
+habitatNphm<-arrange(habitatNphm, altitude)
+communityBphm<-communityB
+communityBphm$altitude<-habitatN$altitude
+communityBphm<-arrange(communityBphm, communityBphm$altitude)
+rownames(communityBphm) <- habitatNphm$sample_name
+communityBphm <- communityBphm %>% dplyr::select(-altitude)
+
+annotation_row = data.frame(Altitude=habitatNphm$altitude)
+rownames(annotation_row) = habitatNphm$sample_name
+ann_colors = list(Type = c(Low= "#00bfc4",Medium= "#C77CFF",High="#F8766D"))
+colvec <- brewer.pal(3, "OrRd")
+
+pheatmap(communityBphm,annotation_colors = ann_colors,annotation_row = annotation_row,cluster_rows = F,color= colvec, clustering_method="ward.D",fontsize_row=8,margins=c(5,10))
+#ward.D, and ward.D2 are the best to show turnover. cutree_cols=6
+#clustering_method = ward.D,"single", "complete", "average", "mcquitty", "median", "centroid", "ward.D2"
+#gaps_row = c(12,18)
+rm(communityBphm,habitatNphm)
+```
+
+#2.Beta diversity UNCONSTRAINED ordination
+For mvabund and boral analyses, remove singletons
+```{r remove singletons from communityB}
+communityB <- communityB[, which(specnumber(communityB, MARGIN=2) > 1)]
+# 353 species remained
+```
+
+##boral
+Tested different error families (testing code is archived down beMedium). Based on residuals, decided on family = "binomial," which is good because the dataset is presence/absence. Using row.effect = "random" to get a composition-only analysis. Now rerun with many more iterations
+
+```{r boral high iterations}
+# This takes half hour to run.
+# set up MCMC parameters
+mcmc.control4 <- list(n.burnin = 10000, n.iteration = 40000, n.thin = 30) 
+# set up model
+commB.fit.b3.4.none <- boral(communityB, family = "binomial", lv.control = list(num.lv = 2), row.eff = "random", mcmc.control = mcmc.control4, save.model = TRUE); beep(sound = 1)
+#save output in case i want to do other analyses on it later
+saveRDS(commB.fit.b3.4.none, "boral_commB.fit.b3.4.lvs_20200306.RDS")
+commB.fit.b3.4.none <- readRDS("boral_commB.fit.b3.4.lvs_20200306.RDS") # to restore
+summary(commB.fit.b3.4.none)
+par(mfrow = c(2,2))
+plot(commB.fit.b3.4.none) ## Plots used in residual analysis, 
+
+par(mfrow = c(1,1))
+commB.fit.b3.4.none.ord <- lvsplot(commB.fit.b3.4.none, biplot=FALSE, col = as.numeric(habitatN$Gov_Type), return.vals = TRUE, main="Plot of latent variable posterior medians")
+habitatN$lvs1<-commB.fit.b3.4.none.ord$scaled.lvs[,1]
+habitatN$lvs2<-commB.fit.b3.4.none.ord$scaled.lvs[,2]
+```
+
+Try to interpret the latent variables.
+```{r boral lvs correlations}
+#To see which environmantel data can fit best
+scatterplotMatrix(~altitude+infestation_rate+stump+die_wood+height+DBH+forest_structure+arbor+Canopy+lvs1+lvs2, data=habitatN)
+
+#using lm to test correlation
+lm.al<-lm(habitatN$altitude~habitatN$lvs1)
+summary(lm.al)
+#r 0.8851 p =1.112e-14 ***
+lm.ir<-lm(habitatN$infestation_rate~habitatN$lvs2)
+summary(lm.ir)
+#Adjusted R-squared= 0.3052  p= 0.0009167 ***
+lm.ca<-lm(habitatN$lvs2~habitatN$Canopy)
+summary(lm.ca)
+#Adjusted R-squared:0.1105 p-value: 0.0407 *
+
+#using cor.test to test correlation
+cor.test(y=habitatN$infestation_rate, x = habitatN$lvs2, method = "pearson")
+#t = -3.7944, df = 28, p-value = 0.0007272
+#test correlation of Canopy
+cor.test(habitatN$Canopy, y = habitatN$lvs2, method = "pearson")
+#t = -2.1513, df = 28, p-value = 0.04023
+cor.test(habitatN$Canopy, y = habitatN$infestation_rate, method = "pearson")
+#t = 1.4945, df = 28, p-value = 0.1462
+```
+
+```{r code for boral figure}
+#plot boral Latent variable
+col=c("#00bfc4","#C77CFF","#F8766D")
+ggplot(habitatN, aes(x = lvs1, y = lvs2, colour = Gov_Type,shape=site))  + geom_point()+scale_shape(solid = FALSE)+scale_fill_manual(values=col)+scale_colour_manual(values=col)+ xlab("Latent variable 1")+ylab("Latent variable 2")
+#plot latent variable relationship with env.data
+ggplot(habitatN, aes(x = lvs1, y = altitude)) +geom_point()+scale_fill_manual(values=col)+scale_colour_manual(values=col)+ xlab("Latent variable 1")+ylab("Elevation")+geom_smooth(method="lm",se=FALSE)
+ggplot(habitatN, aes(x = infestation_rate, y = lvs2)) +geom_point()+scale_fill_manual(values=col)+scale_colour_manual(values=col)+ xlab("Latent variable 2")+ylab("Infestation rate")+geom_smooth(method="lm",se=FALSE)
+
+```
+
+##mvabund
+*anova.manyglm* options
+    *test = "score"* # anova.manyglm help file says that test="wald" is poor for binomial data under some conditions. "score" is the better alternative. 
+    *cor.type = "shrink"* # estimates correlations between species, but in an efficient way, which is necessary for our kind of dataset, where there are many more species than there are samples
+
+```{r test for env sig diff}
+
+communityB.mvb <- mvabund(communityB)  
+nboot <- 999
+#base model1 for Gov_Type
+modt1.mvb <- manyglm(communityB.mvb~Gov_Type, family = binomial("cloglog"),data=habitatN)
+plot(modt1.mvb)
+anova(modt1.mvb,cor.type = "shrink", test = "score", show.time = "all", nBoot = nboot)  
+#                   Res.Df   Df.diff   score      Pr(>score)
+#Gov_Type           27       2       113.1      0.001 ***
+modt1.1.mvb <- manyglm(communityB.mvb~Gov_Type+altitude, family = binomial("cloglog"),data=habitatN)
+plot(modt1.1.mvb)
+anova(modt1.1.mvb,cor.type = "shrink", test = "score", show.time = "all", nBoot = nboot)
+#                 Res.Df Df.diff  score Pr(>score)    
+#(Intercept)           29                              
+#Gov_Type              27       2 112.93      0.001 ***
+#altitude              26       1  81.14      0.001 ***
+#Gov_Type:altitude     24       2 177.76      0.240    
+
+#base model1.2 for altitude
+mod1.2.mvb <-manyglm(communityB.mvb~altitude, family = binomial("cloglog"),data=habitatN)
+plot(mod1.2.mvb)
+anova(mod1.2.mvb,cor.type = "shrink", test = "score", show.time = "all", nBoot = nboot)
+#altitude        28       1 90.08      0.001 ***
+
+#base model2 for infestation_rate
+mod2.mvb <-manyglm(communityB.mvb~infestation_rate, family = binomial("cloglog"),data=habitatN)
+plot(mod2.mvb)
+anova(mod2.mvb,cor.type = "shrink", test = "score", show.time = "all", nBoot = nboot)
+#infestation_rate     28       1 351.5      0.046 *
+
+#base model3 for altitude*infestation_rate
+mod3.mvb <-manyglm(communityB.mvb~altitude*infestation_rate, family = binomial("cloglog"),data=habitatN)
+plot(mod3.mvb)
+anova(mod3.mvb,cor.type = "shrink", test = "score", show.time = "all", nBoot = nboot)
+
+#                         Res.Df Df.diff score Pr(>score)    
+#(Intercept)                   29                             
+#altitude                      28       1 100.1      0.001 ***
+#infestation_rate              27       1 136.8      0.044 *  
+#altitude:infestation_rate     26       1 131.1      0.935
+
+#base model4 for altitude+infestation_rate
+mod4.mvb <-manyglm(communityB.mvb~altitude+infestation_rate, family = binomial("cloglog"),data=habitatN)
+plot(mod4.mvb)
+anova(mod4.mvb,cor.type = "shrink", test = "score", show.time = "all", nBoot = nboot)
+#(Intercept)          29                             
+#altitude             28       1 100.4      0.001 ***
+#infestation_rate     27       1 137.1      0.036 *
+```
+
+
+
+#3.Zeta diversity
+```{r, load data for zeta}
+#graphics.off()
+xy<- habitatN %>% dplyr::select(c(Easting,Northing))
+xy<-data.frame(xy)
+data.spec<- communityAll
+data.spec<-data.frame(data.spec)
+data.spec[data.spec>1] <- 1
+
+data.env<- habitatN %>% dplyr::select(altitude,infestation_rate,height,DBH,Canopy,stump)
+data.env<-data.frame(scale(data.env))
+str(data.env)
+#check for collinearity
+XX<-cor(data.env)
+kappa(XX,exact=TRUE)
+```
+##1 sensitivity analysis to chooes sampling times
+```{r sensitivity analysis, eval=FALSE}
+set.seed(1)
+par(mfrow = c(1, 1))
+#take 12 hours
+zeta.sens <- Zeta.sam.sensitivity(data.spec, order = 3, sam.seq =
+c(10,25,50,100,seq(250,1500,250)), reps = 100, display = TRUE, plot
+= TRUE, notch = TRUE)
+```
+##2 zeta decline
+```{r zeta decline}
+set.seed(1)
+zeta.decline.fine.ex <- Zeta.decline.ex(data.spec, orders = 1:7,plot = FALSE)
+zeta.decline.fine.ex 
+#order1:30~AIC= (pl:51.69)-(exp:16.03)= 35.66 DF=3, which means my data fit exp. model well than power law model.
+#order1:6~AIC= (pl:-7.115484)-(exp:4.570427) DF=3, which means my data fit power law model well than exp. model.
+# $zeta.order
+# [1] 1 2 3 4 5 6
+# $zeta.val
+# [1] 54.56666667  4.08045977  0.66231527  0.16869184  0.05547837  0.02033093
+# $zeta.val.sd
+# [1] 19.4788715  4.7359260  1.1990834  0.4686624  0.2449073  0.1444325
+# $ratio
+# [1] 0.07477935 0.16231388 0.25470022 0.32887402 0.36646598
+
+
+#try non-directional nearest neighbour (NON) zeta
+zeta.decline.fine.NON <- Zeta.decline.mc(data.spec, xy, orders= 1:7, NON = TRUE, DIR = FALSE, FPO = NULL)
+zeta.decline.fine.NON
+# order1:5$aic
+#               df        AIC
+# zeta$zeta.exp  3  -1.392157
+# zeta$zeta.pl   3 -24.581560
+#1:6
+#               df         AIC
+# zeta$zeta.exp  3   0.8970044
+# zeta$zeta.pl   3 -17.1711218
+#1:7
+#               df         AIC
+# zeta$zeta.exp  3  -0.9007362
+# zeta$zeta.pl   3 -10.0518276
+#zeta val.
+#54.566667 13.133333  5.300000  3.066667  1.800000  1.600000  0.600000
+set.seed(1)
+zeta.decline.fine1000.NON <- Zeta.decline.mc(data.spec, xy, orders =1:10, sam = 1000, NON = TRUE, plot = FALSE)
+zeta.decline.fine1000.NON
+
+#here we choose All model.
+```
+
+```{r zeta decline model plot}
+##plot the zeta decline for the expected zeta
+par(mfrow = c(2, 4),mar=c(5,4.5,4,2))
+plot(zeta.decline.fine.ex$zeta.order, zeta.decline.fine.ex$zeta.val,xlab = "Zeta order", ylab = "Zeta-diversity", pch = 20, ylim = c(0,zeta.decline.fine.ex$zeta.val[1] +zeta.decline.fine.ex$zeta.val.sd[1]), main = "Zeta-diversity decline",col="red",cex.lab=1,cex.main=1)
+lines(zeta.decline.fine.ex$zeta.order,zeta.decline.fine.ex$zeta.val,col="red")
+lines(zeta.decline.fine.ex$zeta.order, zeta.decline.fine.ex$zeta.val+ zeta.decline.fine.ex$zeta.val.sd, lty = 2)
+lines(zeta.decline.fine.ex$zeta.order, zeta.decline.fine.ex$zeta.val- zeta.decline.fine.ex$zeta.val.sd, lty = 2)
+
+##plot the zeta ratio for the expected zeta
+plot(zeta.decline.fine.ex$zeta.order[1:(length(zeta.decline.fine.ex$zeta.order) - 1)], zeta.decline.fine.ex$ratio, pch = 20, xlab ="Zeta order", ylab = "Zeta-ratio", main = "Ratio of zeta- diversity\ndecline",col="red",ylim=c(0,1),cex.lab=1,cex.main=1)
+lines(zeta.decline.fine.ex$zeta.order[1:(length(zeta.decline.fine.ex$zeta.order) - 1)], zeta.decline.fine.ex$ratio,col="red")
+
+##plot the zeta decline in a log scale for the expected zeta
+plot(zeta.decline.fine.ex$zeta.order, zeta.decline.fine.ex$zeta.val,log = "y", pch = 20, xlab = "Zeta order", ylab = "Zeta-diversity",
+main = "Exponential regression",col="red",cex.lab=1,cex.main=1)
+lines(zeta.decline.fine.ex$zeta.order,10^predict.lm(zeta.decline.fine.ex$zeta.exp,data.frame(zeta.decline.fine.ex$zeta.order)),col="red")
+
+##plot the zeta decline in a log-log scale for the expected zeta
+plot(zeta.decline.fine.ex$zeta.order, zeta.decline.fine.ex$zeta.val,log = "xy", pch = 20, xlab = "Zeta order", ylab = "Zeta-diversity",
+main = "Power law regression",col="red",cex.lab=1,cex.main=1)
+lines(zeta.decline.fine.ex$zeta.order,10^predict.lm(zeta.decline.fine.ex$zeta.pl,data.frame(zeta.decline.fine.ex$zeta.order)),col="red")
+
+#for NON model
+##plot the zeta decline for the NON subsampling scheme
+plot(zeta.decline.fine1000.NON$zeta.order,zeta.decline.fine1000.NON$zeta.val, xlab = "Zeta order", ylab ="Zeta-diversity", pch = 20, ylim = c(0,zeta.decline.fine1000.NON$zeta.val[1] +zeta.decline.fine1000.NON$zeta.val.sd[1]), main = "Zeta-diversity decline",col="red",cex.lab=1,cex.main=1)
+lines(zeta.decline.fine1000.NON$zeta.order,zeta.decline.fine1000.NON$zeta.val,col="red")
+lines(zeta.decline.fine1000.NON$zeta.order,zeta.decline.fine1000.NON$zeta.val + zeta.decline.fine1000.NON$zeta.val.sd, lty = 2)
+lines(zeta.decline.fine1000.NON$zeta.order,zeta.decline.fine1000.NON$zeta.val - zeta.decline.fine1000.NON$zeta.val.sd, lty = 2)
+
+##plot the zeta ratio for the NON subsampling scheme
+plot(zeta.decline.fine1000.NON$zeta.order[1:(length(zeta.decline.fine1000.NON$zeta.order) - 1)], zeta.decline.fine1000.NON$ratio, pch =20, xlab = "Zeta order", ylab = "Zeta-ratio", main = "Ratio of zeta-diversity\ndecline",col="red",ylim=c(0,1),cex.lab=1,cex.main=1)
+lines(zeta.decline.fine1000.NON$zeta.order[1:(length(zeta.decline.fine1000.NON$zeta.order) - 1)],
+zeta.decline.fine1000.NON$ratio,col="red")
+
+##plot the zeta decline in a log scale for the NON subsampling scheme
+plot(zeta.decline.fine1000.NON$zeta.order,zeta.decline.fine1000.NON$zeta.val, log = "y", pch = 20, xlab ="Zeta order", ylab = "Zeta-diversity", main = "Exponentialregression",col="red",cex.lab=1,cex.main=1)
+lines(zeta.decline.fine1000.NON$zeta.order,10^predict.lm(zeta.decline.fine1000.NON$zeta.exp,data.frame(zeta.decline.fine1000.NON$zeta.order)),col="red")
+
+##plot the zeta decline in a log-log scale for the NON subsampling scheme
+plot(zeta.decline.fine1000.NON$zeta.order,zeta.decline.fine1000.NON$zeta.val, log = "xy", pch = 20, xlab = "Zeta order", ylab = "Zeta-diversity", main = "Power law regression",col="red",cex.lab=1,cex.main=1)
+lines(zeta.decline.fine1000.NON$zeta.order,10^predict.lm(zeta.decline.fine1000.NON$zeta.pl,data.frame(zeta.decline.fine1000.NON$zeta.order)),col="red")
+```
+
+```{r zeta decline for low/high}
+#col=c("#00bfc4","#F8766D")
+zeta.decline.fine.ex.L <- Zeta.decline.ex(communityB.low, orders = 1:11,plot = FALSE)
+zeta.decline.fine.ex.L
+zeta.decline.fine.ex.H <- Zeta.decline.ex(communityB.high, orders = 1:11,plot = FALSE)
+zeta.decline.fine.ex.H
+par(mfrow = c(1, 2))#,mar=c(3,3,3,1)
+plot(zeta.decline.fine.ex.L$zeta.order, zeta.decline.fine.ex.L$zeta.val,log = "xy", pch = 20, xlab = "Zeta order", ylab = "Zeta-diversity",main = "Zeta-diversity decline",col="#00bfc4",cex.lab=1,cex.main=1)
+lines(zeta.decline.fine.ex.L$zeta.order,10^predict.lm(zeta.decline.fine.ex.L$zeta.pl,data.frame(zeta.decline.fine.ex.L$zeta.order)),col="#00bfc4")
+
+points(zeta.decline.fine.ex.H$zeta.order,zeta.decline.fine.ex.H$zeta.val,pch=17,col="#F8766D",cex=0.8)
+lines(zeta.decline.fine.ex.H$zeta.order,10^predict.lm(zeta.decline.fine.ex.H$zeta.pl,data.frame(zeta.decline.fine.ex.H$zeta.order)),lty = 1,col="#F8766D")
+
+legend("topright",pch=c(16,17),legend=c("low-infestation","high-infestation"),cex=0.8,bty = "n",lty = 1,col=c("#00bfc4","#F8766D"))
+
+
+plot(zeta.decline.fine.ex.L$zeta.order[1:(length(zeta.decline.fine.ex.L$zeta.order) - 1)], zeta.decline.fine.ex.L$ratio, pch = 20, xlab ="Zeta order", ylab = "Zeta-ratio", main = "Ratio of zeta-diversity decline",col="#00bfc4",ylim=c(0,1),xlim=c(1,10),cex.lab=1,cex.main=1)
+lines(zeta.decline.fine.ex.L$zeta.order[1:(length(zeta.decline.fine.ex.L$zeta.order) - 1)], zeta.decline.fine.ex.L$ratio,col="#00bfc4")
+
+points(zeta.decline.fine.ex.H$zeta.order[1:(length(zeta.decline.fine.ex.H$zeta.order) - 1)]
+       ,zeta.decline.fine.ex.H$ratio,pch=17,col="#F8766D")
+lines(zeta.decline.fine.ex.H$zeta.order[1:(length(zeta.decline.fine.ex.H$zeta.order) - 1)]
+      ,zeta.decline.fine.ex.H$ratio,pch=17,col="#F8766D",lty=1)
+
+legend("topright",pch=c(16,17),legend=c("low-infestation","high-infestation"),cex=0.8,bty = "n",lty = 1,col=c("#00bfc4","#F8766D"))
+```
+
+##3.1 Multi-Site Generalised Dissimilarity Modelling
+
+```{r, 30 rep. coefficients. for Sorensen}
+#######make a new data frame########################################
+varpartRabc <- data.frame(matrix(NA,30,ncol=5))
+colnames(varpartRabc)<-c("order2","order3","order4","order5","order6")
+varpartRa <-varpartRabc
+varpartRb <-varpartRabc
+varpartRc <-varpartRabc
+varpartRd <-varpartRabc
+coefficients.order3 <- data.frame(matrix(NA,30,ncol=22))
+coefficients.order4 <- data.frame(matrix(NA,30,ncol=22))
+coefficients.order5 <- data.frame(matrix(NA,30,ncol=22))
+coefficients.order6 <- data.frame(matrix(NA,30,ncol=22))
+#######for 30 rep.#############################################
+for(z in 1:30){
+set.seed(z)
+zeta.ispline.fine6<-Zeta.msgdm(data.spec,data.env,xy,order=6,sam=5000,reg.type="ispline",normalize="Sorensen", family=binomial(link="log"), cons.inter = -1)
+coefficients.order6[z,]<-zeta.ispline.fine6$model$coefficients
+set.seed(z)
+zeta.varpart.ispline.fine6 <-Zeta.varpart(msgdm.mod=zeta.ispline.fine6,reg.type ="ispline",family=binomial("log"), cons.inter = -1)
+varpartRabc[z,5]<-zeta.varpart.ispline.fine6$`Adjusted Rsq`[1]
+varpartRa[z,5]<-zeta.varpart.ispline.fine6$`Adjusted Rsq`[4]
+varpartRb[z,5]<-zeta.varpart.ispline.fine6$`Adjusted Rsq`[5]
+varpartRc[z,5]<-zeta.varpart.ispline.fine6$`Adjusted Rsq`[6]
+varpartRd[z,5]<-zeta.varpart.ispline.fine6$`Adjusted Rsq`[7]
+
+set.seed(z)  
+zeta.ispline.fine5 <-Zeta.msgdm(data.spec,data.env,xy,order=5,sam=5000,reg.type="ispline",normalize="Sorensen", family=binomial(link="log"), cons.inter = -1)
+coefficients.order5[z,]<-zeta.ispline.fine5$model$coefficients
+set.seed(z)
+zeta.varpart.ispline.fine5 <-Zeta.varpart(msgdm.mod=zeta.ispline.fine5,reg.type ="ispline",family=binomial("log"), cons.inter = -1)
+varpartRabc[z,4]<-zeta.varpart.ispline.fine5$`Adjusted Rsq`[1]
+varpartRa[z,4]<-zeta.varpart.ispline.fine5$`Adjusted Rsq`[4]
+varpartRb[z,4]<-zeta.varpart.ispline.fine5$`Adjusted Rsq`[5]
+varpartRc[z,4]<-zeta.varpart.ispline.fine5$`Adjusted Rsq`[6]
+varpartRd[z,4]<-zeta.varpart.ispline.fine5$`Adjusted Rsq`[7]
+
+set.seed(z)
+zeta.ispline.fine4 <-Zeta.msgdm(data.spec,data.env,xy,order=4,sam=5000,reg.type="ispline",normalize="Sorensen", family=binomial(link="log"), cons.inter = -1)
+coefficients.order4[z,]<-zeta.ispline.fine4$model$coefficients
+set.seed(z)
+zeta.varpart.ispline.fine4 <-Zeta.varpart(msgdm.mod=zeta.ispline.fine4,reg.type ="ispline",family=binomial("log"), cons.inter = -1)
+varpartRabc[z,3]<-zeta.varpart.ispline.fine4$`Adjusted Rsq`[1]
+varpartRa[z,3]<-zeta.varpart.ispline.fine4$`Adjusted Rsq`[4]
+varpartRb[z,3]<-zeta.varpart.ispline.fine4$`Adjusted Rsq`[5]
+varpartRc[z,3]<-zeta.varpart.ispline.fine4$`Adjusted Rsq`[6]
+varpartRd[z,3]<-zeta.varpart.ispline.fine4$`Adjusted Rsq`[7]
+
+set.seed(z)
+zeta.ispline.fine3 <-Zeta.msgdm(data.spec,data.env,xy,order=3,sam=5000,reg.type="ispline",normalize="Sorensen", family=binomial(link="log"), cons.inter = -1)
+coefficients.order3[z,]<-zeta.ispline.fine3$model$coefficients
+set.seed(z)
+zeta.varpart.ispline.fine3 <-Zeta.varpart(msgdm.mod=zeta.ispline.fine3,reg.type ="ispline",family=binomial("log"), cons.inter = -1)
+varpartRabc[z,2]<-zeta.varpart.ispline.fine3$`Adjusted Rsq`[1]
+varpartRa[z,2]<-zeta.varpart.ispline.fine3$`Adjusted Rsq`[4]
+varpartRb[z,2]<-zeta.varpart.ispline.fine3$`Adjusted Rsq`[5]
+varpartRc[z,2]<-zeta.varpart.ispline.fine3$`Adjusted Rsq`[6]
+varpartRd[z,2]<-zeta.varpart.ispline.fine3$`Adjusted Rsq`[7]
+}
+
+set.seed(1)
+zeta.ispline.fine2 <-Zeta.msgdm(data.spec,data.env,xy,order=2,sam=5000,reg.type="ispline",normalize="Sorensen", family=binomial(link="log"), cons.inter = -1)
+set.seed(1)
+zeta.varpart.ispline.fine2 <-Zeta.varpart(msgdm.mod=zeta.ispline.fine2,reg.type ="ispline",family=binomial("log"), cons.inter = -1)
+varpartRabc[,1]<-zeta.varpart.ispline.fine2$`Adjusted Rsq`[1]
+varpartRa[,1]<-zeta.varpart.ispline.fine2$`Adjusted Rsq`[4]
+varpartRb[,1]<-zeta.varpart.ispline.fine2$`Adjusted Rsq`[5]
+varpartRc[,1]<-zeta.varpart.ispline.fine2$`Adjusted Rsq`[6]
+varpartRd[,1]<-zeta.varpart.ispline.fine2$`Adjusted Rsq`[7]
+ 
+
+#######plot varpartR##################################################
+varpartR<- data.frame(matrix(NA,25,ncol=4))
+colnames(varpartR)<-c("mean","sd","order","group")
+varpartR$mean[1:5]<-c(mean(varpartRabc$order2),mean(varpartRabc$order3),mean(varpartRabc$order4),mean(varpartRabc$order5),mean(varpartRabc$order6))
+varpartR$mean[6:10]<-c(mean(varpartRa$order2),mean(varpartRa$order3),mean(varpartRa$order4),mean(varpartRa$order5),mean(varpartRa$order6))
+varpartR$mean[11:15]<-c(mean(varpartRc$order2),mean(varpartRc$order3),mean(varpartRc$order4),mean(varpartRc$order5),mean(varpartRc$order6))
+varpartR$sd[1:5]<-c(sd(varpartRabc$order2),sd(varpartRabc$order3),sd(varpartRabc$order4),sd(varpartRabc$order5),sd(varpartRabc$order6))
+varpartR$sd[6:10]<-c(sd(varpartRa$order2),sd(varpartRa$order3),sd(varpartRa$order4),sd(varpartRa$order5),sd(varpartRa$order6))
+varpartR$sd[11:15]<-c(sd(varpartRc$order2),sd(varpartRc$order3),sd(varpartRc$order4),sd(varpartRc$order5),sd(varpartRc$order6))
+varpartR$order<-c(2:6)
+varpartR$mean[16:20]<-c(mean(varpartRb$order2),mean(varpartRb$order3),mean(varpartRb$order4),mean(varpartRb$order5),mean(varpartRb$order6))
+varpartR$mean[21:25]<-c(mean(varpartRd$order2),mean(varpartRd$order3),mean(varpartRd$order4),mean(varpartRd$order5),mean(varpartRd$order6))
+varpartR$group[1:5]<-"Distance & Environmental variables"
+varpartR$group[6:10]<-"Distance"
+varpartR$group[11:15]<-"Environmental variables"
+varpartR$group[16:20]<-"undistinguishable"
+varpartR$group[21:25]<-"unexplained"
+varpartR.2<-varpartR[1:15,]
+ggplot(varpartR.2, aes(x=order, y=mean, colour=group,group=group)) +geom_point(size=3, shape=21, fill="white") +xlab("Zeta order") + ylab("Variance explained(R square)")+ theme_bw()+geom_line( linetype="dashed")+ geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.05) 
+
+#######plot pie varpartR #############
+par(mfrow=c(1,1),xpd=T)
+#par(mfrow=c(1,5),oma=c(0,0,0,0),mar=c(0,2,0,5),xpd=NA)
+pie.neg(varpartR$mean[c(6,16,11,21)], density = c(4, 0, 8, -1),angle = c(90, 0, 0, 0), labels =c("distance","undistinguishable","environment","unexplained"),radius = 1)
+text(x=(par("usr")[1]+par("usr")[2])/2,y=1.2*par("usr")[4],expression(paste(zeta[2])),cex=2)
+
+pie.neg(varpartR$mean[c(7,17,12,22)], density = c(4, 0, 8, -
+1), angle = c(90, 0, 0, 0), labels =c("distance","undistinguishable","environment","unexplained"),radius = 1)
+text(x=(par("usr")[1]+par("usr")[2])/2,y=1.2*par("usr")[4],expression(paste(zeta[3])),cex=2)
+
+pie.neg(varpartR$mean[c(8,18,13,23)], density = c(4, 0, 8, -
+1), angle = c(90, 0, 0, 0), labels =c("distance","undistinguishable","environment","unexplained"),radius = 1)
+text(x=(par("usr")[1]+par("usr")[2])/2,y=1.2*par("usr")[4],expression(paste(zeta[4])),cex=2)
+pie.neg(varpartR$mean[c(9,19,14,24)], density = c(4, 0, 8, -
+1), angle = c(90, 0, 0, 0), labels =c("distance","undistinguishable","environment","unexplained"),radius = 1)
+text(x=(par("usr")[1]+par("usr")[2])/2,y=1.2*par("usr")[4],expression(paste(zeta[5])),cex=2)
+pie.neg(varpartR$mean[c(10,20,15,25)], density = c(4, 0, 8, -
+1), angle = c(90, 0, 0, 0), labels =c("distance","undistinguishable","environment","unexplained"),radius = 1)
+text(x=(par("usr")[1]+par("usr")[2])/2,y=1.2*par("usr")[4],expression(paste(zeta[6])),cex=2)
+
+#######plot msgdm#####################
+coefficients.order3<-apply(coefficients.order3,2,mean)
+zeta.ispline.fine3$model$coefficients<-coefficients.order3
+coefficients.order4<-apply(coefficients.order4,2,mean)
+zeta.ispline.fine4$model$coefficients<-coefficients.order4
+coefficients.order5<-apply(coefficients.order5,2,mean)
+zeta.ispline.fine5$model$coefficients<-coefficients.order5
+coefficients.order6<-apply(coefficients.order6,2,mean)
+zeta.ispline.fine6$model$coefficients<-coefficients.order6
+par(mfrow=c(1,5))
+Plot.ispline(zeta.ispline.fine2, data.env, distance = TRUE, legend =FALSE,cex=1.5,lwd=1.5)
+Plot.ispline(zeta.ispline.fine3, data.env, distance = TRUE, legend = FALSE,cex=1.5,lwd=1.5)
+Plot.ispline(zeta.ispline.fine4, data.env, distance = TRUE, legend = FALSE,cex=1.5,lwd=1.5)
+Plot.ispline(zeta.ispline.fine5, data.env, distance = TRUE, legend = FALSE,cex=1.5,lwd=1.5)
+Plot.ispline(zeta.ispline.fine6, data.env, distance = TRUE, legend = FALSE,cex=1.5,lwd=1.5)
+par(mfrow=c(2,3))
+plot.new()
+par(xpd=NA)
+legend("topleft",lty=1:(ncol(data.env)+1),pch=1:(ncol(data.env)+1),legend=c(c("Elevation","Infestation Rate","Height","DBH","Canopy Openness","Stump"),"Distance"),cex=1,lwd=1,xpd=T)
+```
+
+```{r store 30 rep. data}
+write.csv(varpartR,file="varpartR.csv",row.names = F)
+coeffi <- data.frame(matrix(NA,4,ncol=22))
+coeffi[1:4,] <- c(coefficients.order3,coefficients.order4,coefficients.order5,coefficients.order6)
+write.csv(coeffi,file="coeffi_sorensen.csv",row.names = F)
+saveRDS(zeta.ispline.fine2,file="zeta.ispline.fine2.RDS")
+saveRDS(zeta.ispline.fine3,file="zeta.ispline.fine3.RDS")
+saveRDS(zeta.ispline.fine4,file="zeta.ispline.fine4.RDS")
+saveRDS(zeta.ispline.fine5,file="zeta.ispline.fine5.RDS")
+saveRDS(zeta.ispline.fine6,file="zeta.ispline.fine6.RDS")
+
+```
+
+##3.2 Multi-Site Generalised Dissimilarity Modelling without altitude
+```{r setting}
+xy<- habitatN %>% dplyr::select(c(Easting,Northing))
+xy<-data.frame(xy)
+data.spec<- communityAll
+data.spec<-data.frame(data.spec)
+data.spec[data.spec>1] <- 1
+
+data.env<- habitatN %>% dplyr::select(infestation_rate,height,DBH,Canopy,stump)
+data.env<-data.frame(scale(data.env))
+str(data.env)
+```
+
+```{r, 30 rep. coefficients. for Sorensen}
+#######make a new data frame########################################
+varpartRabc <- data.frame(matrix(NA,30,ncol=5))
+colnames(varpartRabc)<-c("order2","order3","order4","order5","order6")
+varpartRa <-varpartRabc
+varpartRb <-varpartRabc
+varpartRc <-varpartRabc
+varpartRd <-varpartRabc
+coefficients.order3 <- data.frame(matrix(NA,30,ncol=19))
+coefficients.order4 <- data.frame(matrix(NA,30,ncol=19))
+coefficients.order5 <- data.frame(matrix(NA,30,ncol=19))
+coefficients.order6 <- data.frame(matrix(NA,30,ncol=19))
+#######for 30 rep.#############################################
+for(z in 1:30){
+set.seed(z)
+zeta.ispline.fine6<-Zeta.msgdm(data.spec,data.env,xy,order=6,sam=5000,reg.type="ispline",normalize="Sorensen", family=binomial(link="log"), cons.inter = -1)
+coefficients.order6[z,]<-zeta.ispline.fine6$model$coefficients
+set.seed(z)
+zeta.varpart.ispline.fine6 <-Zeta.varpart(msgdm.mod=zeta.ispline.fine6,reg.type ="ispline",family=binomial("log"), cons.inter = -1)
+varpartRabc[z,5]<-zeta.varpart.ispline.fine6$`Adjusted Rsq`[1]
+varpartRa[z,5]<-zeta.varpart.ispline.fine6$`Adjusted Rsq`[4]
+varpartRb[z,5]<-zeta.varpart.ispline.fine6$`Adjusted Rsq`[5]
+varpartRc[z,5]<-zeta.varpart.ispline.fine6$`Adjusted Rsq`[6]
+varpartRd[z,5]<-zeta.varpart.ispline.fine6$`Adjusted Rsq`[7]
+
+set.seed(z)  
+zeta.ispline.fine5 <-Zeta.msgdm(data.spec,data.env,xy,order=5,sam=5000,reg.type="ispline",normalize="Sorensen", family=binomial(link="log"), cons.inter = -1)
+coefficients.order5[z,]<-zeta.ispline.fine5$model$coefficients
+set.seed(z)
+zeta.varpart.ispline.fine5 <-Zeta.varpart(msgdm.mod=zeta.ispline.fine5,reg.type ="ispline",family=binomial("log"), cons.inter = -1)
+varpartRabc[z,4]<-zeta.varpart.ispline.fine5$`Adjusted Rsq`[1]
+varpartRa[z,4]<-zeta.varpart.ispline.fine5$`Adjusted Rsq`[4]
+varpartRb[z,4]<-zeta.varpart.ispline.fine5$`Adjusted Rsq`[5]
+varpartRc[z,4]<-zeta.varpart.ispline.fine5$`Adjusted Rsq`[6]
+varpartRd[z,4]<-zeta.varpart.ispline.fine5$`Adjusted Rsq`[7]
+
+set.seed(z)
+zeta.ispline.fine4 <-Zeta.msgdm(data.spec,data.env,xy,order=4,sam=5000,reg.type="ispline",normalize="Sorensen", family=binomial(link="log"), cons.inter = -1)
+coefficients.order4[z,]<-zeta.ispline.fine4$model$coefficients
+set.seed(z)
+zeta.varpart.ispline.fine4 <-Zeta.varpart(msgdm.mod=zeta.ispline.fine4,reg.type ="ispline",family=binomial("log"), cons.inter = -1)
+varpartRabc[z,3]<-zeta.varpart.ispline.fine4$`Adjusted Rsq`[1]
+varpartRa[z,3]<-zeta.varpart.ispline.fine4$`Adjusted Rsq`[4]
+varpartRb[z,3]<-zeta.varpart.ispline.fine4$`Adjusted Rsq`[5]
+varpartRc[z,3]<-zeta.varpart.ispline.fine4$`Adjusted Rsq`[6]
+varpartRd[z,3]<-zeta.varpart.ispline.fine4$`Adjusted Rsq`[7]
+
+set.seed(z)
+zeta.ispline.fine3 <-Zeta.msgdm(data.spec,data.env,xy,order=3,sam=5000,reg.type="ispline",normalize="Sorensen", family=binomial(link="log"), cons.inter = -1)
+coefficients.order3[z,]<-zeta.ispline.fine3$model$coefficients
+set.seed(z)
+zeta.varpart.ispline.fine3 <-Zeta.varpart(msgdm.mod=zeta.ispline.fine3,reg.type ="ispline",family=binomial("log"), cons.inter = -1)
+varpartRabc[z,2]<-zeta.varpart.ispline.fine3$`Adjusted Rsq`[1]
+varpartRa[z,2]<-zeta.varpart.ispline.fine3$`Adjusted Rsq`[4]
+varpartRb[z,2]<-zeta.varpart.ispline.fine3$`Adjusted Rsq`[5]
+varpartRc[z,2]<-zeta.varpart.ispline.fine3$`Adjusted Rsq`[6]
+varpartRd[z,2]<-zeta.varpart.ispline.fine3$`Adjusted Rsq`[7]
+}
+
+set.seed(1)
+zeta.ispline.fine2 <-Zeta.msgdm(data.spec,data.env,xy,order=2,sam=5000,reg.type="ispline",normalize="Sorensen", family=binomial(link="log"), cons.inter = -1)
+set.seed(1)
+zeta.varpart.ispline.fine2 <-Zeta.varpart(msgdm.mod=zeta.ispline.fine2,reg.type ="ispline",family=binomial("log"), cons.inter = -1)
+varpartRabc[,1]<-zeta.varpart.ispline.fine2$`Adjusted Rsq`[1]
+varpartRa[,1]<-zeta.varpart.ispline.fine2$`Adjusted Rsq`[4]
+varpartRb[,1]<-zeta.varpart.ispline.fine2$`Adjusted Rsq`[5]
+varpartRc[,1]<-zeta.varpart.ispline.fine2$`Adjusted Rsq`[6]
+varpartRd[,1]<-zeta.varpart.ispline.fine2$`Adjusted Rsq`[7]
+ 
+
+#######plot varpartR##################################################
+varpartR<- data.frame(matrix(NA,25,ncol=4))
+colnames(varpartR)<-c("mean","sd","order","group")
+varpartR$mean[1:5]<-c(mean(varpartRabc$order2),mean(varpartRabc$order3),mean(varpartRabc$order4),mean(varpartRabc$order5),mean(varpartRabc$order6))
+varpartR$mean[6:10]<-c(mean(varpartRa$order2),mean(varpartRa$order3),mean(varpartRa$order4),mean(varpartRa$order5),mean(varpartRa$order6))
+varpartR$mean[11:15]<-c(mean(varpartRc$order2),mean(varpartRc$order3),mean(varpartRc$order4),mean(varpartRc$order5),mean(varpartRc$order6))
+varpartR$sd[1:5]<-c(sd(varpartRabc$order2),sd(varpartRabc$order3),sd(varpartRabc$order4),sd(varpartRabc$order5),sd(varpartRabc$order6))
+varpartR$sd[6:10]<-c(sd(varpartRa$order2),sd(varpartRa$order3),sd(varpartRa$order4),sd(varpartRa$order5),sd(varpartRa$order6))
+varpartR$sd[11:15]<-c(sd(varpartRc$order2),sd(varpartRc$order3),sd(varpartRc$order4),sd(varpartRc$order5),sd(varpartRc$order6))
+varpartR$order<-c(2:6)
+varpartR$mean[16:20]<-c(mean(varpartRb$order2),mean(varpartRb$order3),mean(varpartRb$order4),mean(varpartRb$order5),mean(varpartRb$order6))
+varpartR$mean[21:25]<-c(mean(varpartRd$order2),mean(varpartRd$order3),mean(varpartRd$order4),mean(varpartRd$order5),mean(varpartRd$order6))
+varpartR$group[1:5]<-"distance & environmental variables"
+varpartR$group[6:10]<-"distance"
+varpartR$group[11:15]<-"environmental"
+varpartR$group[16:20]<-"undistinguishable"
+varpartR$group[21:25]<-"unexplained"
+varpartR.2<-varpartR[1:15,]
+ggplot(varpartR.2, aes(x=order, y=mean, colour=group,group=group)) + geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.05) +geom_point(size=3, shape=21, fill="white") +xlab("Zeta order") + ylab("Variance explained(R square)")+ theme_bw()+geom_line( linetype="dashed")
+#######plot pie varpartR #############
+par(mfrow=c(1,1),xpd=T)
+#par(mfrow=c(3,2),oma=c(0,0,0,0),mar=c(0,2,0,5),xpd=NA)
+pie.neg(varpartR$mean[c(6,16,11,21)], density = c(4, 0, 8, -1),angle = c(90, 0, 0, 0), labels =c("distance","undistinguishable","environment","unexplained"),radius = 1)
+text(x=(par("usr")[1]+par("usr")[2])/2,y=1.2*par("usr")[4],expression(paste(zeta[2])),cex=2)
+
+pie.neg(varpartR$mean[c(7,17,12,22)], density = c(4, 0, 8, -
+1), angle = c(90, 0, 0, 0), labels =c("distance","undistinguishable","environment","unexplained"),radius = 1)
+text(x=(par("usr")[1]+par("usr")[2])/2,y=1.2*par("usr")[4],expression(paste(zeta[3])),cex=2)
+
+pie.neg(varpartR$mean[c(8,18,13,23)], density = c(4, 0, 8, -
+1), angle = c(90, 0, 0, 0), labels =c("distance","undistinguishable","environment","unexplained"),radius = 1)
+text(x=(par("usr")[1]+par("usr")[2])/2,y=1.2*par("usr")[4],expression(paste(zeta[4])),cex=2)
+pie.neg(varpartR$mean[c(9,19,14,24)], density = c(4, 0, 8, -
+1), angle = c(90, 0, 0, 0), labels =c("distance","undistinguishable","environment","unexplained"),radius = 1)
+text(x=(par("usr")[1]+par("usr")[2])/2,y=1.2*par("usr")[4],expression(paste(zeta[5])),cex=2)
+pie.neg(varpartR$mean[c(10,20,15,25)], density = c(4, 0, 8, -
+1), angle = c(90, 0, 0, 0), labels =c("distance","undistinguishable","environment","unexplained"),radius = 1)
+text(x=(par("usr")[1]+par("usr")[2])/2,y=1.2*par("usr")[4],expression(paste(zeta[6])),cex=2)
+
+#######plot msgdm#####################
+coefficients.order3<-apply(coefficients.order3,2,mean)
+zeta.ispline.fine3$model$coefficients<-coefficients.order3
+coefficients.order4<-apply(coefficients.order4,2,mean)
+zeta.ispline.fine4$model$coefficients<-coefficients.order4
+coefficients.order5<-apply(coefficients.order5,2,mean)
+zeta.ispline.fine5$model$coefficients<-coefficients.order5
+coefficients.order6<-apply(coefficients.order6,2,mean)
+zeta.ispline.fine6$model$coefficients<-coefficients.order6
+par(mfrow=c(1,5))
+Plot.ispline(zeta.ispline.fine2, data.env, distance = TRUE, legend =FALSE,cex=1.5,lwd=1.5,pch=2:7,lty=2:7)
+Plot.ispline(zeta.ispline.fine3, data.env, distance = TRUE, legend = FALSE,cex=1.5,lwd=1.5,pch=2:7,lty=2:7)
+Plot.ispline(zeta.ispline.fine4, data.env, distance = TRUE, legend = FALSE,cex=1.5,lwd=1.5,pch=2:7,lty=2:7)
+Plot.ispline(zeta.ispline.fine5, data.env, distance = TRUE, legend = FALSE,cex=1.5,lwd=1.5,pch=2:7,lty=2:7)
+Plot.ispline(zeta.ispline.fine6, data.env, distance = TRUE, legend = FALSE,cex=1.5,lwd=1.5,pch=2:7,lty=2:7)
+par(mfrow=c(1,1))
+plot.new()
+par(xpd=NA)
+legend("topleft",lty=2:7,pch=2:7,legend=c(c("Infestation Rate","Height","DBH","Canopy Openness","Stump"),"Distance"),cex=1,lwd=1,xpd=T)
+```
+```{r store 30 rep. data}
+write.csv(varpartR,file="varpartR_noE.csv",row.names = F)
+coeffi <- data.frame(matrix(NA,4,ncol=19))
+coeffi[1:4,] <- c(coefficients.order3,coefficients.order4,coefficients.order5,coefficients.order6)
+write.csv(coeffi,file="coeffi_sorensen_noE.csv",row.names = F)
+saveRDS(zeta.ispline.fine2,file="zeta.ispline.fine2.noE.RDS")
+saveRDS(zeta.ispline.fine3,file="zeta.ispline.fine3.noE.RDS")
+saveRDS(zeta.ispline.fine4,file="zeta.ispline.fine4.noE.RDS")
+saveRDS(zeta.ispline.fine5,file="zeta.ispline.fine5.noE.RDS")
+saveRDS(zeta.ispline.fine6,file="zeta.ispline.fine6.noE.RDS")
+```
+
+#4.tax
+```{r metacoder set up}
+#we used the taxonomic assignment (RDP classifier) results to built a taxon distribution of all OTUs
+mc <- read.csv("../Data/metacoder.csv")
+mcB <- mc
+mcB[mcB>1] <- 1 # using presence/absance data
+mcB$otuid<-mc$otuid
+mcB$lineage<-mc$lineage
+mcB$otuid=as.character(mcB$otuid)
+mcB$lineage=as.character(mcB$lineage)
+#habitat <- read.table("climtree2016_env.txt",fill=TRUE, header=T, sep="\t")
+#habitat$Gov_Type= as.character(habitat$Gov_Type)
+habitat$sample_name= as.character(habitat$sample_name)
+habitat$IR.type<- habitat$infestation_rate
+habitat<- habitat %>% 
+  mutate(
+    IR.type = case_when(
+      habitat$IR.type < 0.25 ~ "intact",
+      habitat$IR.type >= 0.25 ~ "pest.disturbed",
+      TRUE ~ as.character(IR.type)
+    )
+  )
+
+
+#We can parse the taxonomic information in the abundance matrix using a parser from taxa
+obj <- parse_tax_data(mcB, class_cols = "lineage", class_sep = ";",
+                      class_key = c(tax_rank = "info", tax_name = "taxon_name"),
+                     class_regex = "^(.+)__(.+)$")
+#print(obj)
+
+#so typically we remove any counts/OTUs with less than some number of reads. Lets set all counts with less than 5 reads to zero:
+#obj$data$tax_data <- zero_Medium_counts(obj, "tax_data", min_count = 5)
+#no_reads <- rowSums(obj$data$tax_data[, habitat$sample_names]) == 0
+#sum(no_reads)
+#obj <- filter_obs(obj, "tax_data", ! no_reads, drop_taxa = TRUE)
+obj$data$tax_data <- calc_obs_props(obj, "tax_data") 
+print(obj$data$tax_data)
+obj$data$tax_abund <- calc_taxon_abund(obj, "tax_data",cols = habitat$sample_name)
+obj$data$tax_occ <- calc_n_samples(obj, "tax_abund", groups = habitat$IR.type)
+```
+
+```{r metacoder Plot}
+
+##plots the number of "Nose" samples that have reads for each taxon. It also plots the number of OTUs assigned to each taxon in the overall dataset.
+heat_tree(obj, 
+          node_label = taxon_names,
+          node_size = n_obs,
+          node_color = High,
+          node_size_axis_label = "OTU count",
+          node_color_axis_label = "Samples with reads")
+
+
+#Comparing two treatments/groups
+obj$data$diff_table <- compare_groups(obj, dataset = "tax_abund",cols = habitat$sample_names,groups = habitat$IR.type)
+print(obj$data$diff_table)
+#indicates which taxa are more abundant in each treatment
+heat_tree(obj,
+          node_label = taxon_names,
+          node_size = n_obs,
+          node_color = log2_median_ratio,
+          node_color_interval = c(-2, 2),
+          node_color_range = c("cyan", "gray", "tan"),
+          node_size_axis_label = "OTU count",
+          node_color_axis_label = "Log 2 ratio of median proportions")
+#statistics significance
+obj$data$diff_table$wilcox_p_value <- p.adjust(obj$data$diff_table$wilcox_p_value,method = "fdr")
+par(mfrow=c(1,1))
+hist(obj$data$diff_table$wilcox_p_value)
+
+
+```
+#ecocopula
+```{r}
+library(mvabund)
+library(ecoCopula)
+communityC<-as.matrix(communityB)
+communityC_mod <- manyglm(communityC ~ 1, family = "binomial")
+pa_communityC <- cord(communityC_mod)
+plot(pa_communityC)
+
+ord_graph0 <- cgr(communityC_mod, seed = 2) # seed for demonstration
+plot(ord_graph0, pad = 1)
+```
+

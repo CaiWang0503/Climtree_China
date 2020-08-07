@@ -1,0 +1,728 @@
+## JAGS model written for boral version 1.8 on 2020-07-13 15:11:47 ##
+
+ model {
+	 ## Data Level ## 
+	 for(i in 1:n) {
+		 for(j in 1:p) { eta[i,j] <- inprod(lv.coefs[j,2:(num.lv+1)],lvs[i,]) + row.coefs.ID1[row.ids[i,1]] }
+		 y[i,1] ~ dbin(phi(lv.coefs[1,1] + eta[i,1]),1)
+
+		 y[i,2] ~ dbin(phi(lv.coefs[2,1] + eta[i,2]),1)
+
+		 y[i,3] ~ dbin(phi(lv.coefs[3,1] + eta[i,3]),1)
+
+		 y[i,4] ~ dbin(phi(lv.coefs[4,1] + eta[i,4]),1)
+
+		 y[i,5] ~ dbin(phi(lv.coefs[5,1] + eta[i,5]),1)
+
+		 y[i,6] ~ dbin(phi(lv.coefs[6,1] + eta[i,6]),1)
+
+		 y[i,7] ~ dbin(phi(lv.coefs[7,1] + eta[i,7]),1)
+
+		 y[i,8] ~ dbin(phi(lv.coefs[8,1] + eta[i,8]),1)
+
+		 y[i,9] ~ dbin(phi(lv.coefs[9,1] + eta[i,9]),1)
+
+		 y[i,10] ~ dbin(phi(lv.coefs[10,1] + eta[i,10]),1)
+
+		 y[i,11] ~ dbin(phi(lv.coefs[11,1] + eta[i,11]),1)
+
+		 y[i,12] ~ dbin(phi(lv.coefs[12,1] + eta[i,12]),1)
+
+		 y[i,13] ~ dbin(phi(lv.coefs[13,1] + eta[i,13]),1)
+
+		 y[i,14] ~ dbin(phi(lv.coefs[14,1] + eta[i,14]),1)
+
+		 y[i,15] ~ dbin(phi(lv.coefs[15,1] + eta[i,15]),1)
+
+		 y[i,16] ~ dbin(phi(lv.coefs[16,1] + eta[i,16]),1)
+
+		 y[i,17] ~ dbin(phi(lv.coefs[17,1] + eta[i,17]),1)
+
+		 y[i,18] ~ dbin(phi(lv.coefs[18,1] + eta[i,18]),1)
+
+		 y[i,19] ~ dbin(phi(lv.coefs[19,1] + eta[i,19]),1)
+
+		 y[i,20] ~ dbin(phi(lv.coefs[20,1] + eta[i,20]),1)
+
+		 y[i,21] ~ dbin(phi(lv.coefs[21,1] + eta[i,21]),1)
+
+		 y[i,22] ~ dbin(phi(lv.coefs[22,1] + eta[i,22]),1)
+
+		 y[i,23] ~ dbin(phi(lv.coefs[23,1] + eta[i,23]),1)
+
+		 y[i,24] ~ dbin(phi(lv.coefs[24,1] + eta[i,24]),1)
+
+		 y[i,25] ~ dbin(phi(lv.coefs[25,1] + eta[i,25]),1)
+
+		 y[i,26] ~ dbin(phi(lv.coefs[26,1] + eta[i,26]),1)
+
+		 y[i,27] ~ dbin(phi(lv.coefs[27,1] + eta[i,27]),1)
+
+		 y[i,28] ~ dbin(phi(lv.coefs[28,1] + eta[i,28]),1)
+
+		 y[i,29] ~ dbin(phi(lv.coefs[29,1] + eta[i,29]),1)
+
+		 y[i,30] ~ dbin(phi(lv.coefs[30,1] + eta[i,30]),1)
+
+		 y[i,31] ~ dbin(phi(lv.coefs[31,1] + eta[i,31]),1)
+
+		 y[i,32] ~ dbin(phi(lv.coefs[32,1] + eta[i,32]),1)
+
+		 y[i,33] ~ dbin(phi(lv.coefs[33,1] + eta[i,33]),1)
+
+		 y[i,34] ~ dbin(phi(lv.coefs[34,1] + eta[i,34]),1)
+
+		 y[i,35] ~ dbin(phi(lv.coefs[35,1] + eta[i,35]),1)
+
+		 y[i,36] ~ dbin(phi(lv.coefs[36,1] + eta[i,36]),1)
+
+		 y[i,37] ~ dbin(phi(lv.coefs[37,1] + eta[i,37]),1)
+
+		 y[i,38] ~ dbin(phi(lv.coefs[38,1] + eta[i,38]),1)
+
+		 y[i,39] ~ dbin(phi(lv.coefs[39,1] + eta[i,39]),1)
+
+		 y[i,40] ~ dbin(phi(lv.coefs[40,1] + eta[i,40]),1)
+
+		 y[i,41] ~ dbin(phi(lv.coefs[41,1] + eta[i,41]),1)
+
+		 y[i,42] ~ dbin(phi(lv.coefs[42,1] + eta[i,42]),1)
+
+		 y[i,43] ~ dbin(phi(lv.coefs[43,1] + eta[i,43]),1)
+
+		 y[i,44] ~ dbin(phi(lv.coefs[44,1] + eta[i,44]),1)
+
+		 y[i,45] ~ dbin(phi(lv.coefs[45,1] + eta[i,45]),1)
+
+		 y[i,46] ~ dbin(phi(lv.coefs[46,1] + eta[i,46]),1)
+
+		 y[i,47] ~ dbin(phi(lv.coefs[47,1] + eta[i,47]),1)
+
+		 y[i,48] ~ dbin(phi(lv.coefs[48,1] + eta[i,48]),1)
+
+		 y[i,49] ~ dbin(phi(lv.coefs[49,1] + eta[i,49]),1)
+
+		 y[i,50] ~ dbin(phi(lv.coefs[50,1] + eta[i,50]),1)
+
+		 y[i,51] ~ dbin(phi(lv.coefs[51,1] + eta[i,51]),1)
+
+		 y[i,52] ~ dbin(phi(lv.coefs[52,1] + eta[i,52]),1)
+
+		 y[i,53] ~ dbin(phi(lv.coefs[53,1] + eta[i,53]),1)
+
+		 y[i,54] ~ dbin(phi(lv.coefs[54,1] + eta[i,54]),1)
+
+		 y[i,55] ~ dbin(phi(lv.coefs[55,1] + eta[i,55]),1)
+
+		 y[i,56] ~ dbin(phi(lv.coefs[56,1] + eta[i,56]),1)
+
+		 y[i,57] ~ dbin(phi(lv.coefs[57,1] + eta[i,57]),1)
+
+		 y[i,58] ~ dbin(phi(lv.coefs[58,1] + eta[i,58]),1)
+
+		 y[i,59] ~ dbin(phi(lv.coefs[59,1] + eta[i,59]),1)
+
+		 y[i,60] ~ dbin(phi(lv.coefs[60,1] + eta[i,60]),1)
+
+		 y[i,61] ~ dbin(phi(lv.coefs[61,1] + eta[i,61]),1)
+
+		 y[i,62] ~ dbin(phi(lv.coefs[62,1] + eta[i,62]),1)
+
+		 y[i,63] ~ dbin(phi(lv.coefs[63,1] + eta[i,63]),1)
+
+		 y[i,64] ~ dbin(phi(lv.coefs[64,1] + eta[i,64]),1)
+
+		 y[i,65] ~ dbin(phi(lv.coefs[65,1] + eta[i,65]),1)
+
+		 y[i,66] ~ dbin(phi(lv.coefs[66,1] + eta[i,66]),1)
+
+		 y[i,67] ~ dbin(phi(lv.coefs[67,1] + eta[i,67]),1)
+
+		 y[i,68] ~ dbin(phi(lv.coefs[68,1] + eta[i,68]),1)
+
+		 y[i,69] ~ dbin(phi(lv.coefs[69,1] + eta[i,69]),1)
+
+		 y[i,70] ~ dbin(phi(lv.coefs[70,1] + eta[i,70]),1)
+
+		 y[i,71] ~ dbin(phi(lv.coefs[71,1] + eta[i,71]),1)
+
+		 y[i,72] ~ dbin(phi(lv.coefs[72,1] + eta[i,72]),1)
+
+		 y[i,73] ~ dbin(phi(lv.coefs[73,1] + eta[i,73]),1)
+
+		 y[i,74] ~ dbin(phi(lv.coefs[74,1] + eta[i,74]),1)
+
+		 y[i,75] ~ dbin(phi(lv.coefs[75,1] + eta[i,75]),1)
+
+		 y[i,76] ~ dbin(phi(lv.coefs[76,1] + eta[i,76]),1)
+
+		 y[i,77] ~ dbin(phi(lv.coefs[77,1] + eta[i,77]),1)
+
+		 y[i,78] ~ dbin(phi(lv.coefs[78,1] + eta[i,78]),1)
+
+		 y[i,79] ~ dbin(phi(lv.coefs[79,1] + eta[i,79]),1)
+
+		 y[i,80] ~ dbin(phi(lv.coefs[80,1] + eta[i,80]),1)
+
+		 y[i,81] ~ dbin(phi(lv.coefs[81,1] + eta[i,81]),1)
+
+		 y[i,82] ~ dbin(phi(lv.coefs[82,1] + eta[i,82]),1)
+
+		 y[i,83] ~ dbin(phi(lv.coefs[83,1] + eta[i,83]),1)
+
+		 y[i,84] ~ dbin(phi(lv.coefs[84,1] + eta[i,84]),1)
+
+		 y[i,85] ~ dbin(phi(lv.coefs[85,1] + eta[i,85]),1)
+
+		 y[i,86] ~ dbin(phi(lv.coefs[86,1] + eta[i,86]),1)
+
+		 y[i,87] ~ dbin(phi(lv.coefs[87,1] + eta[i,87]),1)
+
+		 y[i,88] ~ dbin(phi(lv.coefs[88,1] + eta[i,88]),1)
+
+		 y[i,89] ~ dbin(phi(lv.coefs[89,1] + eta[i,89]),1)
+
+		 y[i,90] ~ dbin(phi(lv.coefs[90,1] + eta[i,90]),1)
+
+		 y[i,91] ~ dbin(phi(lv.coefs[91,1] + eta[i,91]),1)
+
+		 y[i,92] ~ dbin(phi(lv.coefs[92,1] + eta[i,92]),1)
+
+		 y[i,93] ~ dbin(phi(lv.coefs[93,1] + eta[i,93]),1)
+
+		 y[i,94] ~ dbin(phi(lv.coefs[94,1] + eta[i,94]),1)
+
+		 y[i,95] ~ dbin(phi(lv.coefs[95,1] + eta[i,95]),1)
+
+		 y[i,96] ~ dbin(phi(lv.coefs[96,1] + eta[i,96]),1)
+
+		 y[i,97] ~ dbin(phi(lv.coefs[97,1] + eta[i,97]),1)
+
+		 y[i,98] ~ dbin(phi(lv.coefs[98,1] + eta[i,98]),1)
+
+		 y[i,99] ~ dbin(phi(lv.coefs[99,1] + eta[i,99]),1)
+
+		 y[i,100] ~ dbin(phi(lv.coefs[100,1] + eta[i,100]),1)
+
+		 y[i,101] ~ dbin(phi(lv.coefs[101,1] + eta[i,101]),1)
+
+		 y[i,102] ~ dbin(phi(lv.coefs[102,1] + eta[i,102]),1)
+
+		 y[i,103] ~ dbin(phi(lv.coefs[103,1] + eta[i,103]),1)
+
+		 y[i,104] ~ dbin(phi(lv.coefs[104,1] + eta[i,104]),1)
+
+		 y[i,105] ~ dbin(phi(lv.coefs[105,1] + eta[i,105]),1)
+
+		 y[i,106] ~ dbin(phi(lv.coefs[106,1] + eta[i,106]),1)
+
+		 y[i,107] ~ dbin(phi(lv.coefs[107,1] + eta[i,107]),1)
+
+		 y[i,108] ~ dbin(phi(lv.coefs[108,1] + eta[i,108]),1)
+
+		 y[i,109] ~ dbin(phi(lv.coefs[109,1] + eta[i,109]),1)
+
+		 y[i,110] ~ dbin(phi(lv.coefs[110,1] + eta[i,110]),1)
+
+		 y[i,111] ~ dbin(phi(lv.coefs[111,1] + eta[i,111]),1)
+
+		 y[i,112] ~ dbin(phi(lv.coefs[112,1] + eta[i,112]),1)
+
+		 y[i,113] ~ dbin(phi(lv.coefs[113,1] + eta[i,113]),1)
+
+		 y[i,114] ~ dbin(phi(lv.coefs[114,1] + eta[i,114]),1)
+
+		 y[i,115] ~ dbin(phi(lv.coefs[115,1] + eta[i,115]),1)
+
+		 y[i,116] ~ dbin(phi(lv.coefs[116,1] + eta[i,116]),1)
+
+		 y[i,117] ~ dbin(phi(lv.coefs[117,1] + eta[i,117]),1)
+
+		 y[i,118] ~ dbin(phi(lv.coefs[118,1] + eta[i,118]),1)
+
+		 y[i,119] ~ dbin(phi(lv.coefs[119,1] + eta[i,119]),1)
+
+		 y[i,120] ~ dbin(phi(lv.coefs[120,1] + eta[i,120]),1)
+
+		 y[i,121] ~ dbin(phi(lv.coefs[121,1] + eta[i,121]),1)
+
+		 y[i,122] ~ dbin(phi(lv.coefs[122,1] + eta[i,122]),1)
+
+		 y[i,123] ~ dbin(phi(lv.coefs[123,1] + eta[i,123]),1)
+
+		 y[i,124] ~ dbin(phi(lv.coefs[124,1] + eta[i,124]),1)
+
+		 y[i,125] ~ dbin(phi(lv.coefs[125,1] + eta[i,125]),1)
+
+		 y[i,126] ~ dbin(phi(lv.coefs[126,1] + eta[i,126]),1)
+
+		 y[i,127] ~ dbin(phi(lv.coefs[127,1] + eta[i,127]),1)
+
+		 y[i,128] ~ dbin(phi(lv.coefs[128,1] + eta[i,128]),1)
+
+		 y[i,129] ~ dbin(phi(lv.coefs[129,1] + eta[i,129]),1)
+
+		 y[i,130] ~ dbin(phi(lv.coefs[130,1] + eta[i,130]),1)
+
+		 y[i,131] ~ dbin(phi(lv.coefs[131,1] + eta[i,131]),1)
+
+		 y[i,132] ~ dbin(phi(lv.coefs[132,1] + eta[i,132]),1)
+
+		 y[i,133] ~ dbin(phi(lv.coefs[133,1] + eta[i,133]),1)
+
+		 y[i,134] ~ dbin(phi(lv.coefs[134,1] + eta[i,134]),1)
+
+		 y[i,135] ~ dbin(phi(lv.coefs[135,1] + eta[i,135]),1)
+
+		 y[i,136] ~ dbin(phi(lv.coefs[136,1] + eta[i,136]),1)
+
+		 y[i,137] ~ dbin(phi(lv.coefs[137,1] + eta[i,137]),1)
+
+		 y[i,138] ~ dbin(phi(lv.coefs[138,1] + eta[i,138]),1)
+
+		 y[i,139] ~ dbin(phi(lv.coefs[139,1] + eta[i,139]),1)
+
+		 y[i,140] ~ dbin(phi(lv.coefs[140,1] + eta[i,140]),1)
+
+		 y[i,141] ~ dbin(phi(lv.coefs[141,1] + eta[i,141]),1)
+
+		 y[i,142] ~ dbin(phi(lv.coefs[142,1] + eta[i,142]),1)
+
+		 y[i,143] ~ dbin(phi(lv.coefs[143,1] + eta[i,143]),1)
+
+		 y[i,144] ~ dbin(phi(lv.coefs[144,1] + eta[i,144]),1)
+
+		 y[i,145] ~ dbin(phi(lv.coefs[145,1] + eta[i,145]),1)
+
+		 y[i,146] ~ dbin(phi(lv.coefs[146,1] + eta[i,146]),1)
+
+		 y[i,147] ~ dbin(phi(lv.coefs[147,1] + eta[i,147]),1)
+
+		 y[i,148] ~ dbin(phi(lv.coefs[148,1] + eta[i,148]),1)
+
+		 y[i,149] ~ dbin(phi(lv.coefs[149,1] + eta[i,149]),1)
+
+		 y[i,150] ~ dbin(phi(lv.coefs[150,1] + eta[i,150]),1)
+
+		 y[i,151] ~ dbin(phi(lv.coefs[151,1] + eta[i,151]),1)
+
+		 y[i,152] ~ dbin(phi(lv.coefs[152,1] + eta[i,152]),1)
+
+		 y[i,153] ~ dbin(phi(lv.coefs[153,1] + eta[i,153]),1)
+
+		 y[i,154] ~ dbin(phi(lv.coefs[154,1] + eta[i,154]),1)
+
+		 y[i,155] ~ dbin(phi(lv.coefs[155,1] + eta[i,155]),1)
+
+		 y[i,156] ~ dbin(phi(lv.coefs[156,1] + eta[i,156]),1)
+
+		 y[i,157] ~ dbin(phi(lv.coefs[157,1] + eta[i,157]),1)
+
+		 y[i,158] ~ dbin(phi(lv.coefs[158,1] + eta[i,158]),1)
+
+		 y[i,159] ~ dbin(phi(lv.coefs[159,1] + eta[i,159]),1)
+
+		 y[i,160] ~ dbin(phi(lv.coefs[160,1] + eta[i,160]),1)
+
+		 y[i,161] ~ dbin(phi(lv.coefs[161,1] + eta[i,161]),1)
+
+		 y[i,162] ~ dbin(phi(lv.coefs[162,1] + eta[i,162]),1)
+
+		 y[i,163] ~ dbin(phi(lv.coefs[163,1] + eta[i,163]),1)
+
+		 y[i,164] ~ dbin(phi(lv.coefs[164,1] + eta[i,164]),1)
+
+		 y[i,165] ~ dbin(phi(lv.coefs[165,1] + eta[i,165]),1)
+
+		 y[i,166] ~ dbin(phi(lv.coefs[166,1] + eta[i,166]),1)
+
+		 y[i,167] ~ dbin(phi(lv.coefs[167,1] + eta[i,167]),1)
+
+		 y[i,168] ~ dbin(phi(lv.coefs[168,1] + eta[i,168]),1)
+
+		 y[i,169] ~ dbin(phi(lv.coefs[169,1] + eta[i,169]),1)
+
+		 y[i,170] ~ dbin(phi(lv.coefs[170,1] + eta[i,170]),1)
+
+		 y[i,171] ~ dbin(phi(lv.coefs[171,1] + eta[i,171]),1)
+
+		 y[i,172] ~ dbin(phi(lv.coefs[172,1] + eta[i,172]),1)
+
+		 y[i,173] ~ dbin(phi(lv.coefs[173,1] + eta[i,173]),1)
+
+		 y[i,174] ~ dbin(phi(lv.coefs[174,1] + eta[i,174]),1)
+
+		 y[i,175] ~ dbin(phi(lv.coefs[175,1] + eta[i,175]),1)
+
+		 y[i,176] ~ dbin(phi(lv.coefs[176,1] + eta[i,176]),1)
+
+		 y[i,177] ~ dbin(phi(lv.coefs[177,1] + eta[i,177]),1)
+
+		 y[i,178] ~ dbin(phi(lv.coefs[178,1] + eta[i,178]),1)
+
+		 y[i,179] ~ dbin(phi(lv.coefs[179,1] + eta[i,179]),1)
+
+		 y[i,180] ~ dbin(phi(lv.coefs[180,1] + eta[i,180]),1)
+
+		 y[i,181] ~ dbin(phi(lv.coefs[181,1] + eta[i,181]),1)
+
+		 y[i,182] ~ dbin(phi(lv.coefs[182,1] + eta[i,182]),1)
+
+		 y[i,183] ~ dbin(phi(lv.coefs[183,1] + eta[i,183]),1)
+
+		 y[i,184] ~ dbin(phi(lv.coefs[184,1] + eta[i,184]),1)
+
+		 y[i,185] ~ dbin(phi(lv.coefs[185,1] + eta[i,185]),1)
+
+		 y[i,186] ~ dbin(phi(lv.coefs[186,1] + eta[i,186]),1)
+
+		 y[i,187] ~ dbin(phi(lv.coefs[187,1] + eta[i,187]),1)
+
+		 y[i,188] ~ dbin(phi(lv.coefs[188,1] + eta[i,188]),1)
+
+		 y[i,189] ~ dbin(phi(lv.coefs[189,1] + eta[i,189]),1)
+
+		 y[i,190] ~ dbin(phi(lv.coefs[190,1] + eta[i,190]),1)
+
+		 y[i,191] ~ dbin(phi(lv.coefs[191,1] + eta[i,191]),1)
+
+		 y[i,192] ~ dbin(phi(lv.coefs[192,1] + eta[i,192]),1)
+
+		 y[i,193] ~ dbin(phi(lv.coefs[193,1] + eta[i,193]),1)
+
+		 y[i,194] ~ dbin(phi(lv.coefs[194,1] + eta[i,194]),1)
+
+		 y[i,195] ~ dbin(phi(lv.coefs[195,1] + eta[i,195]),1)
+
+		 y[i,196] ~ dbin(phi(lv.coefs[196,1] + eta[i,196]),1)
+
+		 y[i,197] ~ dbin(phi(lv.coefs[197,1] + eta[i,197]),1)
+
+		 y[i,198] ~ dbin(phi(lv.coefs[198,1] + eta[i,198]),1)
+
+		 y[i,199] ~ dbin(phi(lv.coefs[199,1] + eta[i,199]),1)
+
+		 y[i,200] ~ dbin(phi(lv.coefs[200,1] + eta[i,200]),1)
+
+		 y[i,201] ~ dbin(phi(lv.coefs[201,1] + eta[i,201]),1)
+
+		 y[i,202] ~ dbin(phi(lv.coefs[202,1] + eta[i,202]),1)
+
+		 y[i,203] ~ dbin(phi(lv.coefs[203,1] + eta[i,203]),1)
+
+		 y[i,204] ~ dbin(phi(lv.coefs[204,1] + eta[i,204]),1)
+
+		 y[i,205] ~ dbin(phi(lv.coefs[205,1] + eta[i,205]),1)
+
+		 y[i,206] ~ dbin(phi(lv.coefs[206,1] + eta[i,206]),1)
+
+		 y[i,207] ~ dbin(phi(lv.coefs[207,1] + eta[i,207]),1)
+
+		 y[i,208] ~ dbin(phi(lv.coefs[208,1] + eta[i,208]),1)
+
+		 y[i,209] ~ dbin(phi(lv.coefs[209,1] + eta[i,209]),1)
+
+		 y[i,210] ~ dbin(phi(lv.coefs[210,1] + eta[i,210]),1)
+
+		 y[i,211] ~ dbin(phi(lv.coefs[211,1] + eta[i,211]),1)
+
+		 y[i,212] ~ dbin(phi(lv.coefs[212,1] + eta[i,212]),1)
+
+		 y[i,213] ~ dbin(phi(lv.coefs[213,1] + eta[i,213]),1)
+
+		 y[i,214] ~ dbin(phi(lv.coefs[214,1] + eta[i,214]),1)
+
+		 y[i,215] ~ dbin(phi(lv.coefs[215,1] + eta[i,215]),1)
+
+		 y[i,216] ~ dbin(phi(lv.coefs[216,1] + eta[i,216]),1)
+
+		 y[i,217] ~ dbin(phi(lv.coefs[217,1] + eta[i,217]),1)
+
+		 y[i,218] ~ dbin(phi(lv.coefs[218,1] + eta[i,218]),1)
+
+		 y[i,219] ~ dbin(phi(lv.coefs[219,1] + eta[i,219]),1)
+
+		 y[i,220] ~ dbin(phi(lv.coefs[220,1] + eta[i,220]),1)
+
+		 y[i,221] ~ dbin(phi(lv.coefs[221,1] + eta[i,221]),1)
+
+		 y[i,222] ~ dbin(phi(lv.coefs[222,1] + eta[i,222]),1)
+
+		 y[i,223] ~ dbin(phi(lv.coefs[223,1] + eta[i,223]),1)
+
+		 y[i,224] ~ dbin(phi(lv.coefs[224,1] + eta[i,224]),1)
+
+		 y[i,225] ~ dbin(phi(lv.coefs[225,1] + eta[i,225]),1)
+
+		 y[i,226] ~ dbin(phi(lv.coefs[226,1] + eta[i,226]),1)
+
+		 y[i,227] ~ dbin(phi(lv.coefs[227,1] + eta[i,227]),1)
+
+		 y[i,228] ~ dbin(phi(lv.coefs[228,1] + eta[i,228]),1)
+
+		 y[i,229] ~ dbin(phi(lv.coefs[229,1] + eta[i,229]),1)
+
+		 y[i,230] ~ dbin(phi(lv.coefs[230,1] + eta[i,230]),1)
+
+		 y[i,231] ~ dbin(phi(lv.coefs[231,1] + eta[i,231]),1)
+
+		 y[i,232] ~ dbin(phi(lv.coefs[232,1] + eta[i,232]),1)
+
+		 y[i,233] ~ dbin(phi(lv.coefs[233,1] + eta[i,233]),1)
+
+		 y[i,234] ~ dbin(phi(lv.coefs[234,1] + eta[i,234]),1)
+
+		 y[i,235] ~ dbin(phi(lv.coefs[235,1] + eta[i,235]),1)
+
+		 y[i,236] ~ dbin(phi(lv.coefs[236,1] + eta[i,236]),1)
+
+		 y[i,237] ~ dbin(phi(lv.coefs[237,1] + eta[i,237]),1)
+
+		 y[i,238] ~ dbin(phi(lv.coefs[238,1] + eta[i,238]),1)
+
+		 y[i,239] ~ dbin(phi(lv.coefs[239,1] + eta[i,239]),1)
+
+		 y[i,240] ~ dbin(phi(lv.coefs[240,1] + eta[i,240]),1)
+
+		 y[i,241] ~ dbin(phi(lv.coefs[241,1] + eta[i,241]),1)
+
+		 y[i,242] ~ dbin(phi(lv.coefs[242,1] + eta[i,242]),1)
+
+		 y[i,243] ~ dbin(phi(lv.coefs[243,1] + eta[i,243]),1)
+
+		 y[i,244] ~ dbin(phi(lv.coefs[244,1] + eta[i,244]),1)
+
+		 y[i,245] ~ dbin(phi(lv.coefs[245,1] + eta[i,245]),1)
+
+		 y[i,246] ~ dbin(phi(lv.coefs[246,1] + eta[i,246]),1)
+
+		 y[i,247] ~ dbin(phi(lv.coefs[247,1] + eta[i,247]),1)
+
+		 y[i,248] ~ dbin(phi(lv.coefs[248,1] + eta[i,248]),1)
+
+		 y[i,249] ~ dbin(phi(lv.coefs[249,1] + eta[i,249]),1)
+
+		 y[i,250] ~ dbin(phi(lv.coefs[250,1] + eta[i,250]),1)
+
+		 y[i,251] ~ dbin(phi(lv.coefs[251,1] + eta[i,251]),1)
+
+		 y[i,252] ~ dbin(phi(lv.coefs[252,1] + eta[i,252]),1)
+
+		 y[i,253] ~ dbin(phi(lv.coefs[253,1] + eta[i,253]),1)
+
+		 y[i,254] ~ dbin(phi(lv.coefs[254,1] + eta[i,254]),1)
+
+		 y[i,255] ~ dbin(phi(lv.coefs[255,1] + eta[i,255]),1)
+
+		 y[i,256] ~ dbin(phi(lv.coefs[256,1] + eta[i,256]),1)
+
+		 y[i,257] ~ dbin(phi(lv.coefs[257,1] + eta[i,257]),1)
+
+		 y[i,258] ~ dbin(phi(lv.coefs[258,1] + eta[i,258]),1)
+
+		 y[i,259] ~ dbin(phi(lv.coefs[259,1] + eta[i,259]),1)
+
+		 y[i,260] ~ dbin(phi(lv.coefs[260,1] + eta[i,260]),1)
+
+		 y[i,261] ~ dbin(phi(lv.coefs[261,1] + eta[i,261]),1)
+
+		 y[i,262] ~ dbin(phi(lv.coefs[262,1] + eta[i,262]),1)
+
+		 y[i,263] ~ dbin(phi(lv.coefs[263,1] + eta[i,263]),1)
+
+		 y[i,264] ~ dbin(phi(lv.coefs[264,1] + eta[i,264]),1)
+
+		 y[i,265] ~ dbin(phi(lv.coefs[265,1] + eta[i,265]),1)
+
+		 y[i,266] ~ dbin(phi(lv.coefs[266,1] + eta[i,266]),1)
+
+		 y[i,267] ~ dbin(phi(lv.coefs[267,1] + eta[i,267]),1)
+
+		 y[i,268] ~ dbin(phi(lv.coefs[268,1] + eta[i,268]),1)
+
+		 y[i,269] ~ dbin(phi(lv.coefs[269,1] + eta[i,269]),1)
+
+		 y[i,270] ~ dbin(phi(lv.coefs[270,1] + eta[i,270]),1)
+
+		 y[i,271] ~ dbin(phi(lv.coefs[271,1] + eta[i,271]),1)
+
+		 y[i,272] ~ dbin(phi(lv.coefs[272,1] + eta[i,272]),1)
+
+		 y[i,273] ~ dbin(phi(lv.coefs[273,1] + eta[i,273]),1)
+
+		 y[i,274] ~ dbin(phi(lv.coefs[274,1] + eta[i,274]),1)
+
+		 y[i,275] ~ dbin(phi(lv.coefs[275,1] + eta[i,275]),1)
+
+		 y[i,276] ~ dbin(phi(lv.coefs[276,1] + eta[i,276]),1)
+
+		 y[i,277] ~ dbin(phi(lv.coefs[277,1] + eta[i,277]),1)
+
+		 y[i,278] ~ dbin(phi(lv.coefs[278,1] + eta[i,278]),1)
+
+		 y[i,279] ~ dbin(phi(lv.coefs[279,1] + eta[i,279]),1)
+
+		 y[i,280] ~ dbin(phi(lv.coefs[280,1] + eta[i,280]),1)
+
+		 y[i,281] ~ dbin(phi(lv.coefs[281,1] + eta[i,281]),1)
+
+		 y[i,282] ~ dbin(phi(lv.coefs[282,1] + eta[i,282]),1)
+
+		 y[i,283] ~ dbin(phi(lv.coefs[283,1] + eta[i,283]),1)
+
+		 y[i,284] ~ dbin(phi(lv.coefs[284,1] + eta[i,284]),1)
+
+		 y[i,285] ~ dbin(phi(lv.coefs[285,1] + eta[i,285]),1)
+
+		 y[i,286] ~ dbin(phi(lv.coefs[286,1] + eta[i,286]),1)
+
+		 y[i,287] ~ dbin(phi(lv.coefs[287,1] + eta[i,287]),1)
+
+		 y[i,288] ~ dbin(phi(lv.coefs[288,1] + eta[i,288]),1)
+
+		 y[i,289] ~ dbin(phi(lv.coefs[289,1] + eta[i,289]),1)
+
+		 y[i,290] ~ dbin(phi(lv.coefs[290,1] + eta[i,290]),1)
+
+		 y[i,291] ~ dbin(phi(lv.coefs[291,1] + eta[i,291]),1)
+
+		 y[i,292] ~ dbin(phi(lv.coefs[292,1] + eta[i,292]),1)
+
+		 y[i,293] ~ dbin(phi(lv.coefs[293,1] + eta[i,293]),1)
+
+		 y[i,294] ~ dbin(phi(lv.coefs[294,1] + eta[i,294]),1)
+
+		 y[i,295] ~ dbin(phi(lv.coefs[295,1] + eta[i,295]),1)
+
+		 y[i,296] ~ dbin(phi(lv.coefs[296,1] + eta[i,296]),1)
+
+		 y[i,297] ~ dbin(phi(lv.coefs[297,1] + eta[i,297]),1)
+
+		 y[i,298] ~ dbin(phi(lv.coefs[298,1] + eta[i,298]),1)
+
+		 y[i,299] ~ dbin(phi(lv.coefs[299,1] + eta[i,299]),1)
+
+		 y[i,300] ~ dbin(phi(lv.coefs[300,1] + eta[i,300]),1)
+
+		 y[i,301] ~ dbin(phi(lv.coefs[301,1] + eta[i,301]),1)
+
+		 y[i,302] ~ dbin(phi(lv.coefs[302,1] + eta[i,302]),1)
+
+		 y[i,303] ~ dbin(phi(lv.coefs[303,1] + eta[i,303]),1)
+
+		 y[i,304] ~ dbin(phi(lv.coefs[304,1] + eta[i,304]),1)
+
+		 y[i,305] ~ dbin(phi(lv.coefs[305,1] + eta[i,305]),1)
+
+		 y[i,306] ~ dbin(phi(lv.coefs[306,1] + eta[i,306]),1)
+
+		 y[i,307] ~ dbin(phi(lv.coefs[307,1] + eta[i,307]),1)
+
+		 y[i,308] ~ dbin(phi(lv.coefs[308,1] + eta[i,308]),1)
+
+		 y[i,309] ~ dbin(phi(lv.coefs[309,1] + eta[i,309]),1)
+
+		 y[i,310] ~ dbin(phi(lv.coefs[310,1] + eta[i,310]),1)
+
+		 y[i,311] ~ dbin(phi(lv.coefs[311,1] + eta[i,311]),1)
+
+		 y[i,312] ~ dbin(phi(lv.coefs[312,1] + eta[i,312]),1)
+
+		 y[i,313] ~ dbin(phi(lv.coefs[313,1] + eta[i,313]),1)
+
+		 y[i,314] ~ dbin(phi(lv.coefs[314,1] + eta[i,314]),1)
+
+		 y[i,315] ~ dbin(phi(lv.coefs[315,1] + eta[i,315]),1)
+
+		 y[i,316] ~ dbin(phi(lv.coefs[316,1] + eta[i,316]),1)
+
+		 y[i,317] ~ dbin(phi(lv.coefs[317,1] + eta[i,317]),1)
+
+		 y[i,318] ~ dbin(phi(lv.coefs[318,1] + eta[i,318]),1)
+
+		 y[i,319] ~ dbin(phi(lv.coefs[319,1] + eta[i,319]),1)
+
+		 y[i,320] ~ dbin(phi(lv.coefs[320,1] + eta[i,320]),1)
+
+		 y[i,321] ~ dbin(phi(lv.coefs[321,1] + eta[i,321]),1)
+
+		 y[i,322] ~ dbin(phi(lv.coefs[322,1] + eta[i,322]),1)
+
+		 y[i,323] ~ dbin(phi(lv.coefs[323,1] + eta[i,323]),1)
+
+		 y[i,324] ~ dbin(phi(lv.coefs[324,1] + eta[i,324]),1)
+
+		 y[i,325] ~ dbin(phi(lv.coefs[325,1] + eta[i,325]),1)
+
+		 y[i,326] ~ dbin(phi(lv.coefs[326,1] + eta[i,326]),1)
+
+		 y[i,327] ~ dbin(phi(lv.coefs[327,1] + eta[i,327]),1)
+
+		 y[i,328] ~ dbin(phi(lv.coefs[328,1] + eta[i,328]),1)
+
+		 y[i,329] ~ dbin(phi(lv.coefs[329,1] + eta[i,329]),1)
+
+		 y[i,330] ~ dbin(phi(lv.coefs[330,1] + eta[i,330]),1)
+
+		 y[i,331] ~ dbin(phi(lv.coefs[331,1] + eta[i,331]),1)
+
+		 y[i,332] ~ dbin(phi(lv.coefs[332,1] + eta[i,332]),1)
+
+		 y[i,333] ~ dbin(phi(lv.coefs[333,1] + eta[i,333]),1)
+
+		 y[i,334] ~ dbin(phi(lv.coefs[334,1] + eta[i,334]),1)
+
+		 y[i,335] ~ dbin(phi(lv.coefs[335,1] + eta[i,335]),1)
+
+		 y[i,336] ~ dbin(phi(lv.coefs[336,1] + eta[i,336]),1)
+
+		 y[i,337] ~ dbin(phi(lv.coefs[337,1] + eta[i,337]),1)
+
+		 y[i,338] ~ dbin(phi(lv.coefs[338,1] + eta[i,338]),1)
+
+		 y[i,339] ~ dbin(phi(lv.coefs[339,1] + eta[i,339]),1)
+
+		 y[i,340] ~ dbin(phi(lv.coefs[340,1] + eta[i,340]),1)
+
+		 y[i,341] ~ dbin(phi(lv.coefs[341,1] + eta[i,341]),1)
+
+		 y[i,342] ~ dbin(phi(lv.coefs[342,1] + eta[i,342]),1)
+
+		 y[i,343] ~ dbin(phi(lv.coefs[343,1] + eta[i,343]),1)
+
+		 y[i,344] ~ dbin(phi(lv.coefs[344,1] + eta[i,344]),1)
+
+		 y[i,345] ~ dbin(phi(lv.coefs[345,1] + eta[i,345]),1)
+
+		 y[i,346] ~ dbin(phi(lv.coefs[346,1] + eta[i,346]),1)
+
+		 y[i,347] ~ dbin(phi(lv.coefs[347,1] + eta[i,347]),1)
+
+		 y[i,348] ~ dbin(phi(lv.coefs[348,1] + eta[i,348]),1)
+
+		 y[i,349] ~ dbin(phi(lv.coefs[349,1] + eta[i,349]),1)
+
+		 y[i,350] ~ dbin(phi(lv.coefs[350,1] + eta[i,350]),1)
+
+		 y[i,351] ~ dbin(phi(lv.coefs[351,1] + eta[i,351]),1)
+
+		 y[i,352] ~ dbin(phi(lv.coefs[352,1] + eta[i,352]),1)
+
+		 y[i,353] ~ dbin(phi(lv.coefs[353,1] + eta[i,353]),1)
+
+		 }
+	 ## Latent variables ##
+	 for(i in 1:n) { for(k in 1:num.lv) { lvs[i,k] ~ dnorm(0,1) } } 
+
+	 ## Process level and priors ##
+	 for(j in 1:p) { lv.coefs[j,1] ~ dnorm(0,0.1) } ## Separate species intercepts
+
+	 for(i in 1:n.ID[1]) { row.coefs.ID1[i] ~ dnorm(0, pow(row.sigma.ID1,-2)) } 
+	 row.sigma.ID1 ~ dunif(0,30)
+
+	 for(i in 1:(num.lv-1)) { for(j in (i+2):(num.lv+1)) { lv.coefs[i,j] <- 0 } } ## Constraints to 0 on upper diagonal
+	 for(i in 1:num.lv) { lv.coefs[i,i+1] ~ dnorm(0,0.1)I(0,) } ## Sign constraints on diagonal elements
+	 for(i in 2:num.lv) { for(j in 2:i) { lv.coefs[i,j] ~ dnorm(0,0.1) } } ## Free lower diagonals
+	 for(i in (num.lv+1):p) { for(j in 2:(num.lv+1)) { lv.coefs[i,j] ~ dnorm(0,0.1) } } ## All other elements
+
+	 }
